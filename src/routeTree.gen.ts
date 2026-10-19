@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as DevicesIdRouteImport } from './routes/devices.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevicesIdRoute = DevicesIdRouteImport.update({
+  id: '/devices/$id',
+  path: '/devices/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/explore': typeof ExploreRoute
+  '/devices/$id': typeof DevicesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/explore': typeof ExploreRoute
+  '/devices/$id': typeof DevicesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/explore': typeof ExploreRoute
+  '/devices/$id': typeof DevicesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/explore' | '/devices/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/explore' | '/devices/$id'
+  id: '__root__' | '/' | '/explore' | '/devices/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ExploreRoute: typeof ExploreRoute
+  DevicesIdRoute: typeof DevicesIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/devices/$id': {
+      id: '/devices/$id'
+      path: '/devices/$id'
+      fullPath: '/devices/$id'
+      preLoaderRoute: typeof DevicesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ExploreRoute: ExploreRoute,
+  DevicesIdRoute: DevicesIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
