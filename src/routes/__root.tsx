@@ -1,0 +1,277 @@
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+import {
+  Outlet,
+  Link,
+  createRootRouteWithContext,
+  useRouter,
+  useRouterState,
+  HeadContent,
+  Scripts,
+  type ErrorComponentProps,
+} from "@tanstack/react-router";
+
+import { useEffect, type ReactNode } from "react";
+
+import appCss from "../styles.css?url";
+
+import { reportLovableError } from "../lib/lovable-error-reporting";
+
+import { Toaster } from "@/components/ui/sonner";
+
+import {
+  BottomNav,
+  SiteFooter,
+  SiteHeader,
+} from "@/components/site/SiteChrome";
+
+// --------------------------------------------------
+// NOT FOUND PAGE
+// --------------------------------------------------
+
+function NotFoundComponent() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-7xl font-bold text-foreground">
+          404
+        </h1>
+
+        <h2 className="mt-4 text-xl font-semibold text-foreground">
+          This part is missing
+        </h2>
+
+        <p className="mt-2 text-sm text-muted-foreground">
+          The page you're looking for doesn't exist or
+          has been moved.
+        </p>
+
+        <div className="mt-6">
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Go home
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --------------------------------------------------
+// APPLICATION ERROR PAGE
+// --------------------------------------------------
+
+function ErrorComponent({
+  error,
+  reset,
+}: ErrorComponentProps) {
+  console.error(error);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    reportLovableError(error, {
+      boundary: "tanstack_root_error_component",
+    });
+  }, [error]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          This page didn't load
+        </h1>
+
+        <p className="mt-2 text-sm text-muted-foreground">
+          Something went wrong. Please try again.
+        </p>
+
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <button
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Try again
+          </button>
+
+          <a
+            href="/"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+          >
+            Go home
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --------------------------------------------------
+// ROOT ROUTE
+// --------------------------------------------------
+
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+}>()({
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1",
+      },
+
+      {
+        title: "PartLoop — Electronics Marketplace",
+      },
+
+      {
+        name: "description",
+        content:
+          "PartLoop connects owners of damaged electronics with technicians and spare-parts buyers.",
+      },
+
+      {
+        property: "og:title",
+        content: "PartLoop",
+      },
+
+      {
+        property: "og:description",
+        content:
+          "Your broken device. Someone else's missing part.",
+      },
+
+      {
+        property: "og:type",
+        content: "website",
+      },
+
+      {
+        name: "twitter:card",
+        content: "summary_large_image",
+      },
+    ],
+
+    links: [
+      {
+        rel: "stylesheet",
+        href: appCss,
+      },
+
+      {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+
+      {
+        rel: "stylesheet",
+        href:
+          "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+      },
+
+      {
+        rel: "icon",
+        type: "image/png",
+        href: "/favicon.png",
+      },
+    ],
+  }),
+
+  shellComponent: RootShell,
+
+  component: RootComponent,
+
+  notFoundComponent: NotFoundComponent,
+
+  errorComponent: ErrorComponent,
+});
+
+// --------------------------------------------------
+// HTML DOCUMENT
+// --------------------------------------------------
+
+function RootShell({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <html lang="en-NG">
+      <head>
+        <HeadContent />
+      </head>
+
+      <body>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+
+// --------------------------------------------------
+// MAIN APPLICATION LAYOUT
+// --------------------------------------------------
+
+function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+
+  // Identify the current application page.
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+
+  // Authentication pages use their own clean layout.
+  const isAuthPage =
+    pathname.replace(/\/+$/, "") === "/auth";
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      {isAuthPage ? (
+        // ------------------------------------------
+        // CLEAN AUTHENTICATION LAYOUT
+        // No marketplace header
+        // No footer
+        // No mobile bottom navigation
+        // ------------------------------------------
+
+        <div className="min-h-dvh bg-background">
+          <Outlet />
+        </div>
+      ) : (
+        // ------------------------------------------
+        // PARTLOOP MARKETPLACE LAYOUT
+        // ------------------------------------------
+
+        <div className="flex min-h-dvh flex-col bg-background">
+          <SiteHeader />
+
+          <main className="min-h-[70vh] flex-1">
+            <Outlet />
+          </main>
+
+          <SiteFooter />
+
+          <BottomNav />
+        </div>
+      )}
+
+      {/* Notifications work on all pages */}
+      <Toaster position="top-center" />
+    </QueryClientProvider>
+  );
+}
